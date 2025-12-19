@@ -1,0 +1,8 @@
+module.exports = {
+    INVENTORY: 'INVENTORY',
+    FINANCE: 'FINANCE',
+    HR: 'HR',
+    DOCUMENTS: 'DOCUMENTS',
+    NOTIFICATIONS: 'NOTIFICATIONS'
+  };
+  
