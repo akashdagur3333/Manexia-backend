@@ -1,6 +1,36 @@
 const mongoose = require('mongoose');
-module.exports = mongoose.model('Role', new mongoose.Schema({
-  name: String,
-  permissions: [String],
-  orgId: mongoose.Schema.Types.ObjectId
-}));
+
+const roleSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true
+    },
+
+    permissions: {
+      type: [String],
+      default: []
+    },
+
+    orgId: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+    },
+
+    createdBy: {
+      type: mongoose.Schema.Types.Mixed,
+      required: true
+    },
+
+    isActive: {
+      type: Boolean,
+      default: true
+    }
+  },
+  {
+    timestamps: true // ✅ adds createdAt & updatedAt automatically
+  }
+);
+
+module.exports = mongoose.model('Role', roleSchema);
