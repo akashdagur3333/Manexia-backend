@@ -35,16 +35,23 @@ const permissionSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.Mixed,
       required: true
     },
-
-    isActive: {
+    deletedBy: {
+      type: mongoose.Schema.Types.Mixed,
+    },
+    status: {
+      type: String,
+      enum: ['ACTIVE', 'INACTIVE'],
+      default: 'ACTIVE'
+    },
+    isDeleted:{
       type: Boolean,
-      default: true
-    }
+      default: false
+    },
   },
   { timestamps: true }
 );
 
 // Prevent duplicate permission per org
-permissionSchema.index({ orgId: 1, key: 1 }, { unique: true });
+permissionSchema.index({ orgId: 1 }, { unique: true });
 
 module.exports = mongoose.model('Permission', permissionSchema);

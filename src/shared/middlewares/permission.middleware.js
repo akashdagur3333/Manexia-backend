@@ -3,10 +3,8 @@ module.exports = (requiredPermission) => {
     if (!req.user) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
-    console.log(req.user)
     const permissions = req.user.permissions || [];
-    console.log(permissions)
-
+    console.log(permissions,'permission')
     /**
      * ✅ SUPER ADMIN BYPASS
      */

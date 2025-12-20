@@ -7,6 +7,9 @@ const roleSchema = new mongoose.Schema(
       required: true,
       trim: true
     },
+    description: {
+      type: String,
+    },
 
     permissions: {
       type: [String],
@@ -22,11 +25,18 @@ const roleSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.Mixed,
       required: true
     },
-
-    isActive: {
+    deletedBy: {
+      type: mongoose.Schema.Types.Mixed,
+    },
+    status: {
+      type: String,
+      enum: ['ACTIVE', 'INACTIVE'],
+      default: 'ACTIVE'
+    },
+    isDeleted:{
       type: Boolean,
-      default: true
-    }
+      default: false
+    },
   },
   {
     timestamps: true // ✅ adds createdAt & updatedAt automatically

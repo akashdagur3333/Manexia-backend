@@ -5,12 +5,13 @@ const Permission = require('./permission.model');
  */
 exports.create = async (req, res) => {
   try {
-    const { name, key, description, module } = req.body;
+    const { name, key, description, module,status } = req.body;
     const permission = await Permission.create({
       name: name.trim(),
       key: key.trim(),
       description,
       module,
+      status,
       orgId: req.user.organization.orgId,
       createdBy: {
         userId: req.user.userId,
@@ -69,11 +70,11 @@ exports.list = async (req, res) => {
  */
 exports.update = async (req, res) => {
   const { id } = req.params;
-  const { name, description, isActive } = req.body;
+  const { name, description , key ,module, status} = req.body;
 
   const permission = await Permission.findOneAndUpdate(
     { _id: id, orgId: req.user.organization.orgId },
-    { name, description, isActive },
+    { name, description,key,module,status},
     { new: true }
   );
 
@@ -96,7 +97,11 @@ exports.remove = async (req, res) => {
 
   const permission = await Permission.findOneAndUpdate(
     { _id: id, orgId: req.user.organization.orgId },
-    { isActive: false },
+    { isDeleted: true, createdBy: {
+      userId: req.user.userId,
+      name: req.user.name,
+      email: req.user.email
+    } },
     { new: true }
   );
 

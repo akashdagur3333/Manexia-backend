@@ -9,7 +9,14 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.Mixed,
     require:true
   }
-  , status: { type: String, default: 'ACTIVE' }
+  , status: { type: String, default: 'ACTIVE' },
+  isDeleted:{
+    type: Boolean,
+    default: false
+  },
+  deletedBy: {
+    type: mongoose.Schema.Types.Mixed,
+  }
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);
