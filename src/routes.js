@@ -4,10 +4,11 @@ const router = express.Router();
 router.use('/auth', require('./modules/auth/auth.routes'));
 router.use('/roles', require('./modules/role/role.routes'));
 router.use('/permissions', require('./modules/permission/permission.routes'));
+router.use('/organizations', require('./modules/organization/organization.routes'));
+router.use('/plans', require('./modules/plans/plan.routes'));
 
 router.use('/documents', require('./modules/documents/document.routes'));
 
-router.use('/organizations', require('./modules/organization/organization.routes'));
 router.use('/users', require('./modules/user/user.routes'));
 router.use('/subscriptions', require('./modules/subscription/subscription.routes'));
 

@@ -1,20 +1,11 @@
 const router = require('express').Router();
 const auth = require('../../shared/middlewares/auth.middleware');
-const ctrl = require('./user.controller');
+const ctrl = require('./plan.controller');
 
-// LIST USERS
+router.post('/', auth, ctrl.create);
 router.get('/', auth, ctrl.list);
-
-// GET USER BY ID
 router.get('/:id', auth, ctrl.getById);
-
-// UPDATE USER
 router.put('/:id', auth, ctrl.update);
-
-router.put('/updateName/:id', auth, ctrl.updateName);
-
-// DELETE USER (SOFT DELETE)
 router.delete('/:id', auth, ctrl.remove);
 
 module.exports = router;
-

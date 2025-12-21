@@ -1,11 +1,12 @@
 const Permission = require('./permission.model');
-
+const convertObjectId=require('../../shared/utils/convertObjectId.util')
 /**
  * CREATE PERMISSION
  */
 exports.create = async (req, res) => {
   try {
     const { name, key, description, module,status } = req.body;
+    console.log(req.user)
     const permission = await Permission.create({
       name: name.trim(),
       key: key.trim(),
@@ -43,10 +44,9 @@ exports.create = async (req, res) => {
  */
 exports.list = async (req, res) => {
   const { search = '' } = req.query;
-
   const query = {
-    orgId: req.user.organization.orgId,
-    isActive: true,
+    orgId:req.user.organization.orgId,
+    isDeleted: false,
     ...(search && {
       $or: [
         { name: { $regex: search, $options: 'i' } },
@@ -58,7 +58,6 @@ exports.list = async (req, res) => {
   const permissions = await Permission.find(query)
     .sort({ createdAt: -1 })
     .lean();
-
   res.json({
     success: true,
     data: permissions
@@ -69,25 +68,40 @@ exports.list = async (req, res) => {
  * UPDATE PERMISSION
  */
 exports.update = async (req, res) => {
-  const { id } = req.params;
-  const { name, description , key ,module, status} = req.body;
+  try {
+    const { id } = req.params;
+    const { name, description, key, module, status = 'ACTIVE' } = req.body;
 
-  const permission = await Permission.findOneAndUpdate(
-    { _id: id, orgId: req.user.organization.orgId },
-    { name, description,key,module,status},
-    { new: true }
-  );
+    const permission = await Permission.findOneAndUpdate(
+      {
+        _id: id,
+        orgId: req.user.organization.orgId,
+        isDeleted: { $ne: true }
+      },
+      {
+        $set: { name, description, key, module, status }
+      },
+      { new: true }
+    );
 
-  if (!permission) {
-    return res.status(404).json({ message: 'Permission not found' });
+    if (!permission) {
+      return res.status(404).json({
+        success: false,
+        message: 'Permission not found or deleted'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Permission updated',
+      data: permission
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false });
   }
-
-  res.json({
-    success: true,
-    message: 'Permission updated',
-    data: permission
-  });
 };
+
 
 /**
  * DELETE PERMISSION (SOFT)
@@ -97,7 +111,7 @@ exports.remove = async (req, res) => {
 
   const permission = await Permission.findOneAndUpdate(
     { _id: id, orgId: req.user.organization.orgId },
-    { isDeleted: true, createdBy: {
+    { isDeleted: true, deletedBy: {
       userId: req.user.userId,
       name: req.user.name,
       email: req.user.email

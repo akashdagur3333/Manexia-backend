@@ -8,10 +8,38 @@ exports.list = async (req, res) => {
   }
 };
 
+exports.getById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const role = await Role.findOne({
+      _id: id,
+      isDeleted: false
+    });
+
+    if (!role) {
+      return res.status(404).json({
+        success: false,
+        message: 'Role not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: role
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching role'
+    });
+  }
+};
+
+
 exports.add = async (req, res) => {
   try {
     const { name, permissions,description,status } = req.body;
-
     const role = await Role.create({
       name: name.trim(),
       permissions: permissions || [],
