@@ -1,5 +1,4 @@
 const Permission = require('./permission.model');
-const convertObjectId=require('../../shared/utils/convertObjectId.util')
 /**
  * CREATE PERMISSION
  */

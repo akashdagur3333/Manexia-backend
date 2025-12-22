@@ -4,7 +4,6 @@ const User = require('../user/user.model');
 const Role = require('../role/role.model');
 const Organization = require('../organization/organization.model');
 const mongoose = require('mongoose');
-const convertObjectId = require('../../shared/utils/convertObjectId.util');
 
 exports.register = async ({ name, email, password,organization,role,status}) => {
   const existing = await User.findOne({ email });
@@ -29,7 +28,7 @@ exports.login = async ({ email, password }) => {
   const match = await bcrypt.compare(password, user.password);
   if (!match) throw new Error('Invalid credentials');
   const role = await Role.findById(
-    convertObjectId(user.role.roleId)
+    user.role.roleId
   );  
   let permissions=role.permissions.includes('*') ? "SUPER_ADMIN":role.permissions;
   const token = jwt.sign(

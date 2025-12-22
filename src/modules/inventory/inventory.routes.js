@@ -18,72 +18,74 @@ const warehouse = require('./warehouse/controller/warehouse.controller');
 const warehouseOrder = require('./warehouse/controller/warehouseOrder.controller');
 
 const report = require('./reports/inventoryReport.controller');
+const authMiddleware = require('../../shared/middlewares/auth.middleware');
 
 // Category
-router.post('/category', category.create);
-router.get('/category', category.list);
-router.delete('/category/:id', category.remove);
+router.post('/category',authMiddleware, category.create);
+router.get('/category',authMiddleware, category.list);
+router.delete('/category/:id',authMiddleware, category.remove);
 
 // Unit
-router.post('/unit', unit.create);
-router.get('/unit', unit.list);
-router.delete('/unit/:id', unit.remove);
+router.post('/unit',authMiddleware, unit.create);
+router.get('/unit',authMiddleware, unit.list);
+router.delete('/unit/:id',authMiddleware, unit.remove);
 
 // Quantity
-router.post('/quantity', quantity.create);
-router.get('/quantity', quantity.list);
-router.delete('/quantity/:id', quantity.remove);
+router.post('/quantity',authMiddleware, quantity.create);
+router.get('/quantity',authMiddleware, quantity.list);
+router.delete('/quantity/:id',authMiddleware, quantity.remove);
 
 // Material
-router.post('/material', material.create);
-router.get('/material', material.list);
-router.delete('/material/:id', material.remove);
+router.post('/material',authMiddleware, material.create);
+router.get('/material',authMiddleware, material.list);
+router.put('/material/:id',authMiddleware, material.update);
+router.delete('/material/:id',authMiddleware, material.remove);
 
 // Stock
-router.post('/stock', stock.addOrUpdate);
-router.get('/stock', stock.list);
+router.post('/stock',authMiddleware, stock.addOrUpdate);
+router.get('/stock',authMiddleware, stock.list);
 
 // Stock Usage
-router.post('/stock-usage', usage.create);
-router.get('/stock-usage', usage.list);
+router.post('/stock-usage',authMiddleware, usage.create);
+router.get('/stock-usage',authMiddleware, usage.list);
 
 // Vendor
-router.post('/vendor', vendor.create);
-router.get('/vendor', vendor.list);
-router.delete('/vendor/:id', vendor.remove);
+router.post('/vendor',authMiddleware, vendor.create);
+router.get('/vendor',authMiddleware, vendor.list);
+router.delete('/vendor/:id',authMiddleware, vendor.remove);
 
 // Vendor Order
-router.post('/vendor-order', vendorOrder.create);
-router.get('/vendor-order', vendorOrder.list);
+router.post('/vendor-order',authMiddleware, vendorOrder.create);
+router.get('/vendor-order',authMiddleware, vendorOrder.list);
 
 // Vendor Invoice
-router.post('/vendor-invoice', vendorInvoice.create);
-router.get('/vendor-invoice', vendorInvoice.list);
+router.post('/vendor-invoice',authMiddleware, vendorInvoice.create);
+router.get('/vendor-invoice',authMiddleware, vendorInvoice.list);
 
 // Customer
-router.post('/customer', customer.create);
-router.get('/customer', customer.list);
-router.delete('/customer/:id', customer.remove);
+router.post('/customer',authMiddleware, customer.create);
+router.get('/customer',authMiddleware, customer.list);
+router.delete('/customer/:id',authMiddleware, customer.remove);
 
 // Customer Order
-router.post('/customer-order', customerOrder.create);
-router.get('/customer-order', customerOrder.list);
+router.post('/customer-order',authMiddleware, customerOrder.create);
+router.get('/customer-order',authMiddleware, customerOrder.list);
 
 // Customer Invoice
-router.post('/customer-invoice', customerInvoice.create);
-router.get('/customer-invoice', customerInvoice.list);
+router.post('/customer-invoice',authMiddleware, customerInvoice.create);
+router.get('/customer-invoice',authMiddleware, customerInvoice.list);
 
 // Warehouse
-router.post('/warehouse', warehouse.create);
-router.get('/warehouse', warehouse.list);
-router.delete('/warehouse/:id', warehouse.remove);
+router.post('/warehouse',authMiddleware, warehouse.create);
+router.get('/warehouse',authMiddleware, warehouse.list);
+router.delete('/warehouse/:id',authMiddleware, warehouse.remove);
 
 // Warehouse Order
-router.post('/warehouse-order', warehouseOrder.create);
-router.get('/warehouse-order', warehouseOrder.list);
+router.post('/warehouse-order',authMiddleware, warehouseOrder.create);
+router.get('/warehouse-order',authMiddleware, warehouseOrder.list);
 
 // Reports
-router.get('/report/current-stock', report.currentStock);
-router.get('/report/purchase', report.purchaseReport);
-router.get('/report/sales', report.salesReport);
+router.get('/report/current-stock',authMiddleware, report.currentStock);
+router.get('/report/purchase',authMiddleware, report.purchaseReport);
+router.get('/report/sales',authMiddleware, report.salesReport);
 module.exports = router;

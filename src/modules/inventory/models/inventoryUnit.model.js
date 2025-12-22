@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
 
 const InventoryUnitSchema = new mongoose.Schema({
-  name: { type: String, required: true,index:true  },     // kg, pcs, box
-  symbol: String,                             // KG, PCS
+  name: { type: String, required: true  },     // kg, pcs, box
+  symbol: { type: String, required: true,index:true  },                          // KG, PCS
 
   orgId: { type: String, required: true,index:true },
 

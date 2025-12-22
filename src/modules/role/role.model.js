@@ -39,7 +39,7 @@ const roleSchema = new mongoose.Schema(
     },
   },
   {
-    timestamps: true // ✅ adds createdAt & updatedAt automatically
+    timestamps: true 
   }
 );
 

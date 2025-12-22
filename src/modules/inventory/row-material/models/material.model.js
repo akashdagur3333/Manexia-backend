@@ -6,7 +6,7 @@ const MaterialSchema = new mongoose.Schema({
 
   categoryId: String,
   unitId: String,
-  quantityTypeId: String,
+  quantityId: String,
 
   reorderLevel: Number,
 
