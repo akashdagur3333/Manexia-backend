@@ -1,7 +1,12 @@
 const Role = require('./role.model');
 exports.list = async (req, res) => {
   try {
-    const roles = await Role.find({isDeleted:false});
+    console.log(req.user.organization.orgId)
+    const roles = await Role.find({
+      isDeleted: false,
+      orgId: req.user.organization.orgId
+    });
+    
     res.json(roles);
   } catch (err) {
     res.status(500).json({ message: 'Error fetching roles' });

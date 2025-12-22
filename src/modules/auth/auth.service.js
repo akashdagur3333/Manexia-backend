@@ -15,8 +15,8 @@ exports.register = async ({ name, email, password,organization,role,status}) => 
     email,
     password: hashed,
     status:status,
-    role:{roleId:role._id,name:role.name},
-    organization: {orgId:organization._id,name:organization.name}
+    role:{roleId:role.roleId,name:role.name},
+    organization: {orgId:organization.orgId,name:organization.name}
   });
 
   return { message: 'Registered successfully' };
