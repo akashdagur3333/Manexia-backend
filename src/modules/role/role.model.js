@@ -17,7 +17,7 @@ const roleSchema = new mongoose.Schema(
     },
 
     orgId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: String,
       required: true,
     },
 

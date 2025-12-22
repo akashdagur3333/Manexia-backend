@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const CreatedBySchema = new mongoose.Schema(
   {
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    userId: { type: String},
     email: { type: String },
     name: { type: String }
   },

@@ -25,8 +25,7 @@ const permissionSchema = new mongoose.Schema(
     },
 
     orgId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Organization',
+      type: String,
       required: true,
       index: true
     },
@@ -52,6 +51,6 @@ const permissionSchema = new mongoose.Schema(
 );
 
 // Prevent duplicate permission per org
-permissionSchema.index({ orgId: 1 }, { unique: true });
+permissionSchema.index();
 
 module.exports = mongoose.model('Permission', permissionSchema);
