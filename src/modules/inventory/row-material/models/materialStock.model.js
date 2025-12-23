@@ -6,7 +6,7 @@ const MaterialStockSchema = new mongoose.Schema({
 
   availableQty: { type: Number, default: 0 },
   reservedQty: { type: Number, default: 0 },
-
+  referenceType:{ type: String, required: true },
   orgId: { type: String, required: true },
   isDeleted: { type: Boolean, default: false },
 

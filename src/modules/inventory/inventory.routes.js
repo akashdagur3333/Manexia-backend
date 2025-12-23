@@ -42,8 +42,11 @@ router.put('/material/:id',authMiddleware, material.update);
 router.delete('/material/:id',authMiddleware, material.remove);
 
 // Stock
-router.post('/stock',authMiddleware, stock.addOrUpdate);
-router.get('/stock',authMiddleware, stock.list);
+router.post('/stocks/in', authMiddleware, stock.stockIn);
+router.post('/stocks/reserve', authMiddleware, stock.reserve);
+router.post('/stocks/release', authMiddleware, stock.release);
+router.post('/stocks/consume', authMiddleware, stock.consume);
+router.get('/stocks/', authMiddleware, stock.list);
 
 // Stock Usage
 router.post('/stock-usage',authMiddleware, usage.create);
@@ -78,11 +81,15 @@ router.get('/customer-invoice',authMiddleware, customerInvoice.list);
 // Warehouse
 router.post('/warehouse',authMiddleware, warehouse.create);
 router.get('/warehouse',authMiddleware, warehouse.list);
+router.put('/warehouse/:id',authMiddleware, warehouse.update);
 router.delete('/warehouse/:id',authMiddleware, warehouse.remove);
 
 // Warehouse Order
 router.post('/warehouse-order',authMiddleware, warehouseOrder.create);
 router.get('/warehouse-order',authMiddleware, warehouseOrder.list);
+router.put('/warehouse-order/:id',authMiddleware, warehouseOrder.update);
+router.delete('/warehouse-order/:id',authMiddleware, warehouseOrder.remove);
+router.get('/warehouse-order/approval/:id',authMiddleware, warehouseOrder.approve);
 
 // Reports
 router.get('/report/current-stock',authMiddleware, report.currentStock);

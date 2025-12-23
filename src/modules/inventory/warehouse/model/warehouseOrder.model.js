@@ -14,7 +14,7 @@ const WarehouseOrderSchema = new mongoose.Schema({
 
   status: {
     type: String,
-    default: 'PENDING' // PENDING → APPROVED → COMPLETED
+    default: 'PENDING'
   },
 
   orgId: { type: String, required: true },

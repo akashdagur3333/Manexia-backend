@@ -53,7 +53,7 @@ exports.list = async (req, res) => {
       ]
     })
   };
-
+console.log(query,'query')
   const permissions = await Permission.find(query)
     .sort({ createdAt: -1 })
     .lean();
