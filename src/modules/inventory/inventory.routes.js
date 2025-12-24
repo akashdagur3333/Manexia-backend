@@ -55,11 +55,16 @@ router.get('/stock-usage',authMiddleware, usage.list);
 // Vendor
 router.post('/vendor',authMiddleware, vendor.create);
 router.get('/vendor',authMiddleware, vendor.list);
+router.put('/vendor/:id',authMiddleware, vendor.update);
 router.delete('/vendor/:id',authMiddleware, vendor.remove);
+
 
 // Vendor Order
 router.post('/vendor-order',authMiddleware, vendorOrder.create);
 router.get('/vendor-order',authMiddleware, vendorOrder.list);
+router.put('/vendor-order/:id',authMiddleware, vendorOrder.update);
+router.put('/vendor-order/approve/:id',authMiddleware, vendorOrder.approve);
+router.put('/vendor-order/recieve/:id',authMiddleware, vendorOrder.receive);
 
 // Vendor Invoice
 router.post('/vendor-invoice',authMiddleware, vendorInvoice.create);

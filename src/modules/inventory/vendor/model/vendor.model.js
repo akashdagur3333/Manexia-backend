@@ -1,27 +1,71 @@
 const mongoose = require('mongoose');
 
-const VendorSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: String,
-  phone: String,
-  address: String,
-  gstNumber: String,
+const VendorSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+      index: true
+    },
 
-  orgId: { type: String, required: true },
-  isDeleted: { type: Boolean, default: false },
+    email: {
+      type: String,
+      trim: true,
+      lowercase: true
+    },
 
-  createdBy: {
-    userId: String,
-    name: String,
-    email: String
+    phone: {
+      type: String,
+      trim: true
+    },
+
+    address: {
+      type: String,
+      trim: true
+    },
+
+    gstNumber: {
+      type: String,
+      trim: true,
+      uppercase: true
+    },
+
+    // 🔹 Organization scope
+    orgId: {
+      type: String,
+      required: true,
+      index: true
+    },
+
+    // 🔹 Soft delete
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true
+    },
+
+    // 🔹 Audit
+    createdBy: {
+      userId: String,
+      name: String,
+      email: String
+    },
+
+    deletedBy: {
+      userId: String,
+      name: String,
+      email: String,
+      deletedAt: Date
+    }
   },
-
-  deletedBy: {
-    userId: String,
-    name: String,
-    email: String,
-    deletedAt: Date
+  {
+    timestamps: true
   }
-}, { timestamps: true });
+);
+
+// 🔹 Helpful indexes
+VendorSchema.index({ orgId: 1, name: 1 });
+VendorSchema.index({ orgId: 1, isDeleted: 1 });
 
 module.exports = mongoose.model('Vendor', VendorSchema);
