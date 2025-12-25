@@ -11,5 +11,6 @@ router.use('/hr', require('./modules/finance/finance.routes'));
 router.use('/documents', require('./modules/documents/document.routes'));
 router.use('/users', require('./modules/user/user.routes'));
 router.use('/subscriptions', require('./modules/subscription/subscription.routes'));
+router.use('/form', require('./modules/manexia/manexia.routes'));
 
 module.exports = router;

@@ -558,7 +558,7 @@ exports.receive = async (req, res) => {
             type: 'IN',
             referenceType: 'VENDOR_ORDER',
             referenceId: order._id.toString(),
-            remark: order.remark || 'Vendor order received',
+            remark:'Vendor order received',
             orgId,
             createdBy: {
               userId: req.user.userId,

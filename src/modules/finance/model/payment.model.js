@@ -1,27 +1,112 @@
 const mongoose = require('mongoose');
 
-const PaymentSchema = new mongoose.Schema({
-  accountId: { type: String, required: true },
+const PaymentSchema = new mongoose.Schema(
+  {
+    /* =====================
+       ACCOUNT
+    ===================== */
+    accountId: {
+      type: String,
+      required: true,
+      index: true
+    },
 
-  referenceType: String,   // VENDOR | CUSTOMER
-  referenceId: String,
+    /* =====================
+       REFERENCE
+    ===================== */
+    referenceType: {
+      type: String,
+      enum: ['CUSTOMER', 'VENDOR'],
+      required: true,
+      index: true
+    },
 
-  invoiceId: String,
+    referenceId: {
+      type: String,
+      required: true,
+      index: true
+    },
 
-  type: { type: String, required: true }, // IN | OUT
-  amount: { type: Number, required: true },
-  paymentMode: String,    // CASH | BANK | UPI
-  paymentDate: Date,
+    invoiceId: {
+      type: String,
+      index: true
+    },
 
-  remarks: String,
+    /* =====================
+       PAYMENT INFO
+    ===================== */
+    type: {
+      type: String,
+      enum: ['IN', 'OUT'],   // IN = Customer payment, OUT = Vendor payment
+      required: true,
+      index: true
+    },
 
-  orgId: { type: String, required: true },
+    amount: {
+      type: Number,
+      required: true,
+      min: 0.01
+    },
 
-  createdBy: {
-    userId: String,
-    name: String,
-    email: String
-  }
-}, { timestamps: true });
+    paymentMode: {
+      type: String,
+      enum: ['CASH', 'BANK', 'UPI', 'CHEQUE'],
+      required: true
+    },
+
+    paymentDate: {
+      type: Date,
+      default: Date.now,
+      index: true
+    },
+
+    remarks: {
+      type: String,
+      trim: true
+    },
+
+    /* =====================
+       ORGANIZATION
+    ===================== */
+    orgId: {
+      type: String,
+      required: true,
+      index: true
+    },
+
+    /* =====================
+       SOFT DELETE
+    ===================== */
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true
+    },
+
+    /* =====================
+       AUDIT
+    ===================== */
+    createdBy: {
+      userId: String,
+      name: String,
+      email: String
+    },
+
+    deletedBy: {
+      userId: String,
+      name: String,
+      email: String,
+      deletedAt: Date
+    }
+  },
+  { timestamps: true }
+);
+
+/* =====================
+   INDEXES (PERFORMANCE)
+===================== */
+PaymentSchema.index({ orgId: 1, paymentDate: -1 });
+PaymentSchema.index({ orgId: 1, referenceType: 1, referenceId: 1 });
+PaymentSchema.index({ orgId: 1, accountId: 1 });
 
 module.exports = mongoose.model('Payment', PaymentSchema);

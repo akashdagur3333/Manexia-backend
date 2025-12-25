@@ -18,10 +18,6 @@ const VendorOrderSchema = new mongoose.Schema(
       required: true,
       index: true
     },
-    remark: {
-      type: String,
-    },
-
     // 🔹 Order Info
     orderNumber: {
       type: String,

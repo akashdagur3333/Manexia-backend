@@ -1,27 +1,98 @@
 const mongoose = require('mongoose');
 
-const AccountSchema = new mongoose.Schema({
-  name: { type: String, required: true },      // Cash, HDFC Bank
-  type: { type: String, required: true },      // CASH | BANK
-  accountNumber: String,
-  openingBalance: { type: Number, default: 0 },
-  currentBalance: { type: Number, default: 0 },
+const AccountSchema = new mongoose.Schema(
+  {
+    /* =====================
+       BASIC INFO
+    ===================== */
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+      index: true          // fast search
+    },
 
-  orgId: { type: String, required: true },
-  isDeleted: { type: Boolean, default: false },
+    type: {
+      type: String,
+      enum: ['CASH', 'BANK'],
+      required: true,
+      index: true
+    },
 
-  createdBy: {
-    userId: String,
-    name: String,
-    email: String
+    /* =====================
+       BANK DETAILS (OPTIONAL)
+    ===================== */
+    accountNumber: {
+      type: String,
+      trim: true
+    },
+
+    /* =====================
+       BALANCES
+    ===================== */
+    openingBalance: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
+
+    currentBalance: {
+      type: Number,
+      default: 0
+    },
+
+    /* =====================
+       ORGANIZATION
+    ===================== */
+    orgId: {
+      type: String,
+      required: true,
+      index: true
+    },
+
+    /* =====================
+       SOFT DELETE
+    ===================== */
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true
+    },
+
+    /* =====================
+       AUDIT
+    ===================== */
+    createdBy: {
+      userId: String,
+      name: String,
+      email: String
+    },
+
+    deletedBy: {
+      userId: String,
+      name: String,
+      email: String,
+      deletedAt: Date
+    }
   },
+  { timestamps: true }
+);
 
-  deletedBy: {
-    userId: String,
-    name: String,
-    email: String,
-    deletedAt: Date
+/* =====================
+   AUTO SET CURRENT BALANCE
+   (ONLY ON CREATE)
+===================== */
+AccountSchema.pre('save', function (next) {
+  if (this.isNew) {
+    this.currentBalance = this.openingBalance;
   }
-}, { timestamps: true });
+  next();
+});
+
+/* =====================
+   INDEXES
+===================== */
+AccountSchema.index({ orgId: 1, name: 1 });
+AccountSchema.index({ orgId: 1, type: 1 });
 
 module.exports = mongoose.model('Account', AccountSchema);

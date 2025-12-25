@@ -73,11 +73,16 @@ router.get('/vendor-invoice',authMiddleware, vendorInvoice.list);
 // Customer
 router.post('/customer',authMiddleware, customer.create);
 router.get('/customer',authMiddleware, customer.list);
+router.put('/customer/:id',authMiddleware, customer.update);
 router.delete('/customer/:id',authMiddleware, customer.remove);
 
 // Customer Order
 router.post('/customer-order',authMiddleware, customerOrder.create);
 router.get('/customer-order',authMiddleware, customerOrder.list);
+router.put('/customer-order/:id',authMiddleware, customerOrder.update);
+router.put('/customer-order/confirm/:id',authMiddleware, customerOrder.confirm);
+router.put('/customer-order/deliver/:id',authMiddleware, customerOrder.deliver);
+router.delete('/customer-order/:id',authMiddleware, customerOrder.remove);
 
 // Customer Invoice
 router.post('/customer-invoice',authMiddleware, customerInvoice.create);
@@ -97,7 +102,7 @@ router.delete('/warehouse-order/:id',authMiddleware, warehouseOrder.remove);
 router.get('/warehouse-order/approval/:id',authMiddleware, warehouseOrder.approve);
 
 // Reports
-router.get('/report/current-stock',authMiddleware, report.currentStock);
+router.get('/report/current-stock',authMiddleware, report.currentStockReport);
 router.get('/report/purchase',authMiddleware, report.purchaseReport);
 router.get('/report/sales',authMiddleware, report.salesReport);
 module.exports = router;
