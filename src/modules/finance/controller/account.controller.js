@@ -56,7 +56,7 @@ exports.create = async (req, res) => {
     const account = await Account.create({
       name: name.trim(),
       type,
-      accountNumber: accountNumber?.trim(),
+      accountNumber: accountNumber,
       openingBalance: openingBalance || 0,
       currentBalance: openingBalance || 0, // 🔒 sync on create
       orgId,
@@ -278,7 +278,7 @@ exports.update = async (req, res) => {
 
     if (name !== undefined) updateData.name = name.trim();
     if (type !== undefined) updateData.type = type;
-    if (accountNumber !== undefined) updateData.accountNumber = accountNumber.trim();
+    if (accountNumber !== undefined) updateData.accountNumber = accountNumber;
 
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({

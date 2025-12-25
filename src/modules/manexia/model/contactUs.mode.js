@@ -69,3 +69,4 @@ const ContactUsSchema = new mongoose.Schema(
 );
 
 module.exports = mongoose.model('ContactUs', ContactUsSchema);
+ 

@@ -1,6 +1,9 @@
 const FinanceInvoice = require('../model/financeInvoice.model');
 const mongoose = require('mongoose');
-
+const {
+  getNextInvoiceNumber,
+  formatInvoiceNumber
+} = require('../../../shared/helper/helper');
 
 exports.create = async (req, res) => {
   try {
@@ -10,8 +13,6 @@ exports.create = async (req, res) => {
       referenceType,   // CUSTOMER | VENDOR
       referenceId,
       orderId,
-      invoiceNumber,
-      invoiceDate,
       amount,
       taxAmount = 0
     } = req.body;
@@ -33,13 +34,6 @@ exports.create = async (req, res) => {
       });
     }
 
-    if (!invoiceNumber || invoiceNumber.trim() === '') {
-      return res.status(400).json({
-        success: false,
-        message: 'Invoice number is required'
-      });
-    }
-
     if (amount === undefined || amount < 0) {
       return res.status(400).json({
         success: false,
@@ -55,20 +49,11 @@ exports.create = async (req, res) => {
     }
 
     /* =====================
-       DUPLICATE CHECK
+       AUTO GENERATE INVOICE NUMBER
+       (STARTS FROM 1)
     ===================== */
-    const existingInvoice = await FinanceInvoice.findOne({
-      orgId,
-      invoiceNumber: invoiceNumber.trim(),
-      isDeleted: false
-    });
-
-    if (existingInvoice) {
-      return res.status(409).json({
-        success: false,
-        message: 'Invoice number already exists'
-      });
-    }
+    const seq = await getNextInvoiceNumber(orgId);
+    const invoiceNumber = formatInvoiceNumber(seq); // e.g. INV-0001
 
     /* =====================
        CALCULATIONS
@@ -82,8 +67,9 @@ exports.create = async (req, res) => {
       referenceType,
       referenceId,
       orderId,
-      invoiceNumber: invoiceNumber.trim(),
-      invoiceDate: invoiceDate || new Date(),
+
+      invoiceNumber,
+      invoiceDate: new Date(),
 
       amount,
       taxAmount,
@@ -116,7 +102,6 @@ exports.create = async (req, res) => {
     });
   }
 };
-
 
 exports.list = async (req, res) => {
   try {
@@ -200,8 +185,6 @@ exports.update = async (req, res) => {
     const { id } = req.params;
 
     const {
-      invoiceNumber,
-      invoiceDate,
       amount,
       taxAmount
     } = req.body;
@@ -233,7 +216,7 @@ exports.update = async (req, res) => {
     }
 
     /* =====================
-       BLOCK UPDATE IF PAID
+       BLOCK UPDATE IF PAID / PARTIAL
     ===================== */
     if (invoice.paidAmount > 0) {
       return res.status(400).json({
@@ -260,43 +243,30 @@ exports.update = async (req, res) => {
     }
 
     /* =====================
-       DUPLICATE INVOICE NUMBER
+       RECALCULATE TOTALS
+       (INVOICE IS UNPAID)
     ===================== */
-    if (invoiceNumber && invoiceNumber !== invoice.invoiceNumber) {
-      const exists = await FinanceInvoice.findOne({
-        _id: { $ne: id },
-        orgId,
-        invoiceNumber,
-        isDeleted: false
-      });
+    const updatedAmount =
+      amount !== undefined ? amount : invoice.amount;
 
-      if (exists) {
-        return res.status(409).json({
-          success: false,
-          message: 'Invoice number already exists'
-        });
-      }
-    }
+    const updatedTax =
+      taxAmount !== undefined ? taxAmount : invoice.taxAmount;
 
-    /* =====================
-       UPDATE DATA
-    ===================== */
-    const updatedAmount = amount ?? invoice.amount;
-    const updatedTax = taxAmount ?? invoice.taxAmount;
     const totalAmount = updatedAmount + updatedTax;
 
-    const updateData = {
-      ...(invoiceNumber && { invoiceNumber }),
-      ...(invoiceDate && { invoiceDate }),
-      ...(amount !== undefined && { amount: updatedAmount }),
-      ...(taxAmount !== undefined && { taxAmount: updatedTax }),
-      totalAmount,
-      dueAmount: totalAmount // since unpaid
-    };
-
+    /* =====================
+       UPDATE INVOICE
+    ===================== */
     const updatedInvoice = await FinanceInvoice.findOneAndUpdate(
       { _id: id, orgId },
-      { $set: updateData },
+      {
+        $set: {
+          amount: updatedAmount,
+          taxAmount: updatedTax,
+          totalAmount,
+          dueAmount: totalAmount // unpaid invoice
+        }
+      },
       { new: true }
     );
 
@@ -308,6 +278,7 @@ exports.update = async (req, res) => {
 
   } catch (error) {
     console.error('FinanceInvoice Update Error:', error);
+
     return res.status(500).json({
       success: false,
       message: 'Failed to update invoice'
@@ -347,7 +318,7 @@ exports.remove = async (req, res) => {
     }
 
     /* =====================
-       BLOCK DELETE IF PAID
+       BLOCK DELETE IF PAID / PARTIAL
     ===================== */
     if (invoice.paidAmount > 0) {
       return res.status(400).json({
@@ -369,7 +340,8 @@ exports.remove = async (req, res) => {
           email: req.user.email,
           deletedAt: new Date()
         }
-      }
+      },
+      { new: true }
     );
 
     return res.json({
@@ -379,6 +351,7 @@ exports.remove = async (req, res) => {
 
   } catch (error) {
     console.error('FinanceInvoice Delete Error:', error);
+
     return res.status(500).json({
       success: false,
       message: 'Failed to delete invoice'

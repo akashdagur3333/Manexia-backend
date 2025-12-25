@@ -3,18 +3,20 @@ const router = require('express').Router();
 const account = require('./controller/account.controller');
 const payment = require('./controller/payment.controller');
 const invoice = require('./controller/financeInvoice.controller');
+const authMiddleware = require('../../shared/middlewares/auth.middleware');
 
 // Account
-router.post('/account', account.create);
-router.get('/account', account.list);
-router.delete('/account/:id', account.remove);
+router.post('/account',authMiddleware, account.create);
+router.get('/account',authMiddleware, account.list);
+router.put('/account/:id',authMiddleware, account.update);
+router.delete('/account/:id',authMiddleware, account.remove);
 
 // Payment
-router.post('/payment', payment.create);
-router.get('/payment', payment.list);
+router.post('/payment',authMiddleware, payment.create);
+router.get('/payment',authMiddleware, payment.list);
 
 // Invoice
-router.post('/invoice', invoice.create);
-router.get('/invoice', invoice.list);
+router.post('/invoice',authMiddleware, invoice.create);
+router.get('/invoice',authMiddleware, invoice.list);
 
 module.exports = router;

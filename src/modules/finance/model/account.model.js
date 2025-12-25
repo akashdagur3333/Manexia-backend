@@ -23,8 +23,7 @@ const AccountSchema = new mongoose.Schema(
        BANK DETAILS (OPTIONAL)
     ===================== */
     accountNumber: {
-      type: String,
-      trim: true
+      type: String
     },
 
     /* =====================
