@@ -1,45 +1,18 @@
 const VendorInvoice = require('../model/vendorInvoice.model');
+const {
+  getNextInvoiceNumber,
+  formatInvoiceNumber
+} = require('../../../../shared/helper/helper');
+
 exports.create = async (req, res) => {
   try {
     const orgId = req.user.organization.orgId;
+    const { vendorId, orderId, invoiceDate, amount, taxAmount } = req.body;
 
-    const {
-      vendorId,
-      orderId,
-      invoiceNumber,
-      invoiceDate,
-      amount,
-      taxAmount
-    } = req.body;
-
-    /* =====================
-       VALIDATION
-    ===================== */
-    if (!vendorId) {
+    if (!vendorId || !orderId || !invoiceDate) {
       return res.status(400).json({
         success: false,
-        message: 'Vendor is required'
-      });
-    }
-
-    if (!orderId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Order is required'
-      });
-    }
-
-    if (!invoiceNumber) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invoice number is required'
-      });
-    }
-
-    if (!invoiceDate) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invoice date is required'
+        message: 'Required fields missing'
       });
     }
 
@@ -50,31 +23,13 @@ exports.create = async (req, res) => {
       });
     }
 
-    /* =====================
-       DUPLICATE CHECK
-    ===================== */
-    const exists = await VendorInvoice.findOne({
-      invoiceNumber,
-      orgId,
-      isDeleted: false
-    });
+    // 🔹 SIMPLE AUTO NUMBER
+    const seq = await getNextInvoiceNumber(orgId);
+    const invoiceNumber = formatInvoiceNumber(seq, 'VENDOR');
 
-    if (exists) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invoice number already exists'
-      });
-    }
-
-    /* =====================
-       CALCULATE TOTAL
-    ===================== */
     const tax = typeof taxAmount === 'number' ? taxAmount : 0;
     const totalAmount = amount + tax;
 
-    /* =====================
-       CREATE INVOICE
-    ===================== */
     const invoice = await VendorInvoice.create({
       vendorId,
       orderId,
@@ -99,7 +54,6 @@ exports.create = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('VendorInvoice Create Error:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to create vendor invoice',
@@ -113,7 +67,7 @@ exports.list = async (req, res) => {
   try {
     const orgId = req.user.organization.orgId;
 
-    const invoices = await VendorInvoice.aggregate([
+    const invoices = await CustomerInvoice.aggregate([
       /* =====================
          BASE FILTER
       ===================== */
@@ -125,16 +79,16 @@ exports.list = async (req, res) => {
       },
 
       /* =====================
-         VENDOR LOOKUP
+         CUSTOMER LOOKUP
       ===================== */
       {
         $lookup: {
-          from: 'vendors',
+          from: 'customers',
           let: {
-            vid: {
+            cid: {
               $cond: [
-                { $regexMatch: { input: '$vendorId', regex: /^[a-f\d]{24}$/i } },
-                { $toObjectId: '$vendorId' },
+                { $regexMatch: { input: '$customerId', regex: /^[a-f\d]{24}$/i } },
+                { $toObjectId: '$customerId' },
                 null
               ]
             }
@@ -142,7 +96,7 @@ exports.list = async (req, res) => {
           pipeline: [
             {
               $match: {
-                $expr: { $eq: ['$_id', '$$vid'] },
+                $expr: { $eq: ['$_id', '$$cid'] },
                 isDeleted: false
               }
             },
@@ -150,12 +104,12 @@ exports.list = async (req, res) => {
               $project: { _id: 1, name: 1 }
             }
           ],
-          as: 'vendor'
+          as: 'customer'
         }
       },
       {
         $unwind: {
-          path: '$vendor',
+          path: '$customer',
           preserveNullAndEmptyArrays: true
         }
       },
@@ -165,7 +119,7 @@ exports.list = async (req, res) => {
       ===================== */
       {
         $lookup: {
-          from: 'vendororders',
+          from: 'customerorders',
           let: {
             oid: {
               $cond: [
@@ -206,8 +160,8 @@ exports.list = async (req, res) => {
           invoiceNumber: 1,
           invoiceDate: 1,
 
-          vendorId: '$vendor._id',
-          vendorName: '$vendor.name',
+          customerId: '$customer._id',
+          customerName: '$customer.name',
 
           orderId: '$order._id',
           orderNumber: '$order.orderNumber',
@@ -232,12 +186,13 @@ exports.list = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('VendorInvoice List Error:', error);
+    console.error('CustomerInvoice List Error:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to fetch vendor invoices',
+      message: 'Failed to fetch customer invoices',
       error: error.message
     });
   }
 };
+
 

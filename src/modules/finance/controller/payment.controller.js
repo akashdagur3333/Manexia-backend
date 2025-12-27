@@ -15,7 +15,7 @@ exports.create = async (req, res) => {
       accountId,
       referenceType,   // CUSTOMER | VENDOR
       referenceId,
-      invoiceId,
+      orderId,
       type,            // IN | OUT
       amount,
       paymentMode,
@@ -58,29 +58,29 @@ exports.create = async (req, res) => {
     ===================== */
     let invoice;
 
-    if (invoiceId) {
-      if (referenceType === 'CUSTOMER') {
-        invoice = await CustomerInvoice.findOne({
-          _id: invoiceId,
-          orgId,
-          isDeleted: false
-        }).session(session);
-      } else {
-        invoice = await VendorInvoice.findOne({
-          _id: invoiceId,
-          orgId,
-          isDeleted: false
-        }).session(session);
-      }
+    // if (orderId) {
+    //   if (referenceType === 'CUSTOMER') {
+    //     invoice = await CustomerInvoice.findOne({
+    //       _id: orderId,
+    //       orgId,
+    //       isDeleted: false
+    //     }).session(session);
+    //   } else {
+    //     invoice = await VendorInvoice.findOne({
+    //       _id: orderId,
+    //       orgId,
+    //       isDeleted: false
+    //     }).session(session);
+    //   }
 
-      if (!invoice) {
-        throw new Error('Invoice not found');
-      }
+    //   if (!invoice) {
+    //     throw new Error('Invoice not found');
+    //   }
 
-      if (invoice.dueAmount <= 0) {
-        throw new Error('Invoice already fully paid');
-      }
-    }
+    //   if (invoice.dueAmount <= 0) {
+    //     throw new Error('Invoice already fully paid');
+    //   }
+    // }
 
     /* =====================
        PAYMENT AMOUNT SAFETY
@@ -98,7 +98,7 @@ exports.create = async (req, res) => {
           accountId,
           referenceType,
           referenceId,
-          invoiceId,
+          orderId,
           type,
           amount: payableAmount,
           paymentMode,
@@ -208,14 +208,177 @@ exports.list = async (req, res) => {
     const skip = (Number(page) - 1) * Number(limit);
 
     /* =====================
-       FETCH DATA + COUNT
+       AGGREGATION PIPELINE
     ===================== */
-    const [payments, total] = await Promise.all([
-      Payment.find(match)
-        .sort({ paymentDate: -1, createdAt: -1 })
-        .skip(skip)
-        .limit(Number(limit)),
+    const pipeline = [
+      { $match: match },
 
+      /* =====================
+         ACCOUNT LOOKUP
+      ===================== */
+      {
+        $lookup: {
+          from: 'accounts',
+          let: {
+            aid: {
+              $cond: [
+                { $regexMatch: { input: '$accountId', regex: /^[a-f\d]{24}$/i } },
+                { $toObjectId: '$accountId' },
+                null
+              ]
+            }
+          },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ['$_id', '$$aid'] },
+                isDeleted: false
+              }
+            },
+            { $project: { _id: 1, name: 1 } }
+          ],
+          as: 'account'
+        }
+      },
+      { $unwind: { path: '$account', preserveNullAndEmptyArrays: true } },
+
+      /* =====================
+         CUSTOMER LOOKUP
+      ===================== */
+      {
+        $lookup: {
+          from: 'customers',
+          let: {
+            cid: {
+              $cond: [
+                {
+                  $and: [
+                    { $eq: ['$referenceType', 'CUSTOMER'] },
+                    { $regexMatch: { input: '$referenceId', regex: /^[a-f\d]{24}$/i } }
+                  ]
+                },
+                { $toObjectId: '$referenceId' },
+                null
+              ]
+            }
+          },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ['$_id', '$$cid'] },
+                isDeleted: false
+              }
+            },
+            { $project: { _id: 1, name: 1 } }
+          ],
+          as: 'customer'
+        }
+      },
+
+      /* =====================
+         VENDOR LOOKUP
+      ===================== */
+      {
+        $lookup: {
+          from: 'vendors',
+          let: {
+            vid: {
+              $cond: [
+                {
+                  $and: [
+                    { $eq: ['$referenceType', 'VENDOR'] },
+                    { $regexMatch: { input: '$referenceId', regex: /^[a-f\d]{24}$/i } }
+                  ]
+                },
+                { $toObjectId: '$referenceId' },
+                null
+              ]
+            }
+          },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ['$_id', '$$vid'] },
+                isDeleted: false
+              }
+            },
+            { $project: { _id: 1, name: 1 } }
+          ],
+          as: 'vendor'
+        }
+      },
+
+      /* =====================
+         ORDER LOOKUP (orderId)
+      ===================== */
+      {
+        $lookup: {
+          from: 'orders', // change to customerorders / vendororders if needed
+          let: {
+            oid: {
+              $cond: [
+                { $regexMatch: { input: '$orderId', regex: /^[a-f\d]{24}$/i } },
+                { $toObjectId: '$orderId' },
+                null
+              ]
+            }
+          },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ['$_id', '$$oid'] },
+                isDeleted: { $ne: true }
+              }
+            },
+            { $project: { _id: 1, orderNumber: 1, name: 1 } }
+          ],
+          as: 'order'
+        }
+      },
+      { $unwind: { path: '$order', preserveNullAndEmptyArrays: true } },
+
+      /* =====================
+         FINAL RESPONSE
+      ===================== */
+      {
+        $project: {
+          _id: 1,
+          paymentDate: 1,
+          amount: 1,
+          type: 1,
+          paymentMode: 1,
+          remarks: 1,
+
+          accountId: '$account._id',
+          accountName: '$account.name',
+
+          referenceType: 1,
+          referenceId: 1,
+          referenceName: {
+            $cond: [
+              { $eq: ['$referenceType', 'CUSTOMER'] },
+              { $arrayElemAt: ['$customer.name', 0] },
+              { $arrayElemAt: ['$vendor.name', 0] }
+            ]
+          },
+
+          orderId: '$order._id',
+          orderName: {
+            $ifNull: ['$order.orderNumber', '$order.name']
+          },
+
+          createdAt: 1,
+          createdBy: 1
+        }
+      },
+
+      { $sort: { paymentDate: -1, createdAt: -1 } },
+      { $skip: skip },
+      { $limit: Number(limit) }
+    ];
+
+    const [payments, total] = await Promise.all([
+      Payment.aggregate(pipeline),
       Payment.countDocuments(match)
     ]);
 
@@ -232,13 +395,13 @@ exports.list = async (req, res) => {
 
   } catch (error) {
     console.error('Payment List Error:', error);
-
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch payments'
     });
   }
 };
+
 
 exports.update = async (req, res) => {
   const session = await mongoose.startSession();
@@ -287,24 +450,24 @@ exports.update = async (req, res) => {
     ===================== */
     let invoice = null;
 
-    if (payment.invoiceId) {
-      invoice =
-        payment.referenceType === 'CUSTOMER'
-          ? await CustomerInvoice.findOne({
-              _id: payment.invoiceId,
-              orgId,
-              isDeleted: false
-            }).session(session)
-          : await VendorInvoice.findOne({
-              _id: payment.invoiceId,
-              orgId,
-              isDeleted: false
-            }).session(session);
+    // if (payment.orderId) {
+    //   invoice =
+    //     payment.referenceType === 'CUSTOMER'
+    //       ? await CustomerInvoice.findOne({
+    //           _id: payment.orderId,
+    //           orgId,
+    //           isDeleted: false
+    //         }).session(session)
+    //       : await VendorInvoice.findOne({
+    //           _id: payment.orderId,
+    //           orgId,
+    //           isDeleted: false
+    //         }).session(session);
 
-      if (!invoice) {
-        throw new Error('Invoice not found');
-      }
-    }
+    //   if (!invoice) {
+    //     throw new Error('Invoice not found');
+    //   }
+    // }
 
     /* =====================
        STEP 1: REVERT OLD PAYMENT
@@ -420,24 +583,24 @@ exports.remove = async (req, res) => {
     ===================== */
     let invoice = null;
 
-    if (payment.invoiceId) {
-      invoice =
-        payment.referenceType === 'CUSTOMER'
-          ? await CustomerInvoice.findOne({
-              _id: payment.invoiceId,
-              orgId,
-              isDeleted: false
-            }).session(session)
-          : await VendorInvoice.findOne({
-              _id: payment.invoiceId,
-              orgId,
-              isDeleted: false
-            }).session(session);
+    // if (payment.orderId) {
+    //   invoice =
+    //     payment.referenceType === 'CUSTOMER'
+    //       ? await CustomerInvoice.findOne({
+    //           _id: payment.orderId,
+    //           orgId,
+    //           isDeleted: false
+    //         }).session(session)
+    //       : await VendorInvoice.findOne({
+    //           _id: payment.orderId,
+    //           orgId,
+    //           isDeleted: false
+    //         }).session(session);
 
-      if (!invoice) {
-        throw new Error('Invoice not found');
-      }
-    }
+    //   if (!invoice) {
+    //     throw new Error('Invoice not found');
+    //   }
+    // }
 
     /* =====================
        REVERT PAYMENT EFFECT

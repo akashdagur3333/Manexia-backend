@@ -27,7 +27,7 @@ const PaymentSchema = new mongoose.Schema(
       index: true
     },
 
-    invoiceId: {
+    orderId: {
       type: String,
       index: true
     },

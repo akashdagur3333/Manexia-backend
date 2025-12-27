@@ -14,7 +14,7 @@ const AccountSchema = new mongoose.Schema(
 
     type: {
       type: String,
-      enum: ['CASH', 'BANK'],
+      enum: ['CASH', 'BANK', 'UPI', 'CHEQUE'],
       required: true,
       index: true
     },

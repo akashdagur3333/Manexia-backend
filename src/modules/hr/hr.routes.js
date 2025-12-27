@@ -9,6 +9,7 @@ const report = require('./controller/hrReport.controller');
 router.post('/employee', employee.create);
 router.get('/employee', employee.list);
 router.delete('/employee/:id', employee.remove);
+router.put('/employee/:id', employee.update);
 
 // Attendance
 router.post('/attendance', attendance.mark);
@@ -17,7 +18,8 @@ router.get('/attendance', attendance.list);
 // Task
 router.post('/task', task.create);
 router.get('/task', task.list);
-
+router.put('/task/:id', task.update);
+router.delete('/task/:id', task.remove);
 // Report
 router.get('/report', report.summary);
 

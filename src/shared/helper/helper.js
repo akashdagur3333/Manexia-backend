@@ -14,12 +14,9 @@ async function getNextInvoiceNumber(orgId) {
   return counter.seq;
 }
 
-/**
- * Optional: format invoice number
- * INV-0001, INV-0002
- */
-function formatInvoiceNumber(seq) {
-  return `INV-${String(seq).padStart(4, '0')}`;
+function formatInvoiceNumber(seq, type) {
+  const prefix = type === 'CUSTOMER' ? 'C' : 'V';
+  return `${prefix}-${String(seq).padStart(4, '0')}`;
 }
 
 module.exports = {

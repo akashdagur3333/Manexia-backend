@@ -304,6 +304,208 @@ exports.list = async (req, res) => {
   }
 };
 
+exports.getVendorWiselist = async (req, res) => {
+  try {
+    const orgId = req.user.organization.orgId;
+    const vendorId = req.params.id; // ✅ vendor filter
+
+    const orders = await VendorOrder.aggregate([
+      /* =====================
+         BASE FILTER
+      ===================== */
+      {
+        $match: {
+          orgId,
+          isDeleted: { $ne: true },
+          ...(vendorId ? { vendorId } : {})
+        }
+      },
+
+      /* =====================
+         VENDOR LOOKUP
+      ===================== */
+      {
+        $lookup: {
+          from: 'vendors',
+          let: {
+            vid: {
+              $cond: [
+                { $regexMatch: { input: '$vendorId', regex: /^[a-f\d]{24}$/i } },
+                { $toObjectId: '$vendorId' },
+                null
+              ]
+            }
+          },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ['$_id', '$$vid'] },
+                isDeleted: false
+              }
+            },
+            { $project: { _id: 1, name: 1 } }
+          ],
+          as: 'vendor'
+        }
+      },
+      { $unwind: { path: '$vendor', preserveNullAndEmptyArrays: true } },
+
+      /* =====================
+         WAREHOUSE LOOKUP
+      ===================== */
+      {
+        $lookup: {
+          from: 'warehouses',
+          let: {
+            wid: {
+              $cond: [
+                { $regexMatch: { input: '$warehouseId', regex: /^[a-f\d]{24}$/i } },
+                { $toObjectId: '$warehouseId' },
+                null
+              ]
+            }
+          },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ['$_id', '$$wid'] },
+                isDeleted: false
+              }
+            },
+            { $project: { _id: 1, name: 1 } }
+          ],
+          as: 'warehouse'
+        }
+      },
+      { $unwind: { path: '$warehouse', preserveNullAndEmptyArrays: true } },
+
+      /* =====================
+         MATERIAL LOOKUP
+      ===================== */
+      {
+        $lookup: {
+          from: 'materials',
+          let: {
+            materialIds: {
+              $map: {
+                input: '$items',
+                as: 'item',
+                in: {
+                  $cond: [
+                    { $regexMatch: { input: '$$item.materialId', regex: /^[a-f\d]{24}$/i } },
+                    { $toObjectId: '$$item.materialId' },
+                    null
+                  ]
+                }
+              }
+            }
+          },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $in: ['$_id', '$$materialIds'] },
+                isDeleted: false
+              }
+            },
+            { $project: { _id: 1, name: 1 } }
+          ],
+          as: 'materials'
+        }
+      },
+
+      /* =====================
+         MERGE MATERIAL NAME INTO ITEMS
+      ===================== */
+      {
+        $addFields: {
+          items: {
+            $map: {
+              input: '$items',
+              as: 'item',
+              in: {
+                $mergeObjects: [
+                  '$$item',
+                  {
+                    materialName: {
+                      $let: {
+                        vars: {
+                          mat: {
+                            $arrayElemAt: [
+                              {
+                                $filter: {
+                                  input: '$materials',
+                                  as: 'm',
+                                  cond: {
+                                    $eq: [
+                                      '$$m._id',
+                                      {
+                                        $cond: [
+                                          { $regexMatch: { input: '$$item.materialId', regex: /^[a-f\d]{24}$/i } },
+                                          { $toObjectId: '$$item.materialId' },
+                                          null
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                }
+                              },
+                              0
+                            ]
+                          }
+                        },
+                        in: '$$mat.name'
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+
+      /* =====================
+         FINAL RESPONSE
+      ===================== */
+      {
+        $project: {
+          _id: 1,
+          orderNumber: 1,
+          orderDate: 1,
+          name: 1,
+
+          vendorId: '$vendor._id',
+          vendorName: '$vendor.name',
+
+          warehouseId: '$warehouse._id',
+          warehouseName: '$warehouse.name',
+
+          items: 1,
+          totalAmount: 1,
+          status: 1,
+
+          createdAt: 1,
+          updatedAt: 1,
+          createdBy: 1
+        }
+      },
+
+      { $sort: { createdAt: -1 } }
+    ]);
+
+    return res.json({ success: true, data: orders });
+
+  } catch (error) {
+    console.error('VendorOrder List Error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch vendor orders',
+      error: error.message
+    });
+  }
+};
+
+
 exports.update = async (req, res) => {
   try {
     const { id } = req.params;

@@ -14,6 +14,7 @@ router.delete('/account/:id',authMiddleware, account.remove);
 // Payment
 router.post('/payment',authMiddleware, payment.create);
 router.get('/payment',authMiddleware, payment.list);
+router.delete('/payment/:id',authMiddleware, payment.remove);
 
 // Invoice
 router.post('/invoice',authMiddleware, invoice.create);

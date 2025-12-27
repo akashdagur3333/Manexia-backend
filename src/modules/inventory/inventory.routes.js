@@ -62,6 +62,7 @@ router.delete('/vendor/:id',authMiddleware, vendor.remove);
 // Vendor Order
 router.post('/vendor-order',authMiddleware, vendorOrder.create);
 router.get('/vendor-order',authMiddleware, vendorOrder.list);
+router.get('/vendor-order/:id',authMiddleware, vendorOrder.getVendorWiselist);
 router.put('/vendor-order/:id',authMiddleware, vendorOrder.update);
 router.put('/vendor-order/approve/:id',authMiddleware, vendorOrder.approve);
 router.put('/vendor-order/recieve/:id',authMiddleware, vendorOrder.receive);
@@ -79,6 +80,7 @@ router.delete('/customer/:id',authMiddleware, customer.remove);
 // Customer Order
 router.post('/customer-order',authMiddleware, customerOrder.create);
 router.get('/customer-order',authMiddleware, customerOrder.list);
+router.get('/customer-order/:id',authMiddleware, customerOrder.getCustomerWiselist);
 router.put('/customer-order/:id',authMiddleware, customerOrder.update);
 router.put('/customer-order/confirm/:id',authMiddleware, customerOrder.confirm);
 router.put('/customer-order/deliver/:id',authMiddleware, customerOrder.deliver);

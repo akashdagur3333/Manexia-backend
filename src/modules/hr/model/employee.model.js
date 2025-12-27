@@ -1,33 +1,42 @@
 const mongoose = require('mongoose');
 
-const EmployeeSchema = new mongoose.Schema({
-  employeeCode: String,
-  name: { type: String, required: true },
-  email: String,
-  phone: String,
+const EmployeeSchema = new mongoose.Schema(
+  {
+    employeeCode: { type: String, required: true, index: true },
+    name: { type: String, required: true },
+    email: { type: String, index: true },
+    phone: { type: String, index: true },
 
-  department: String,
-  designation: String,
-  joiningDate: Date,
+    department: String,
+    designation: String,
+    joiningDate: Date,
 
-  salary: Number,
-  status: { type: String, default: 'ACTIVE' },
+    salary: { type: Number, min: 0 },
 
-  orgId: { type: String, required: true },
-  isDeleted: { type: Boolean, default: false },
+    status: {
+      type: String,
+      enum: ['ACTIVE', 'INACTIVE'],
+      default: 'ACTIVE',
+      index: true
+    },
 
-  createdBy: {
-    userId: String,
-    name: String,
-    email: String
+    orgId: { type: String, required: true, index: true },
+    isDeleted: { type: Boolean, default: false, index: true },
+
+    createdBy: {
+      userId: String,
+      name: String,
+      email: String
+    },
+
+    deletedBy: {
+      userId: String,
+      name: String,
+      email: String,
+      deletedAt: Date
+    }
   },
-
-  deletedBy: {
-    userId: String,
-    name: String,
-    email: String,
-    deletedAt: Date
-  }
-}, { timestamps: true });
+  { timestamps: true }
+);
 
 module.exports = mongoose.model('Employee', EmployeeSchema);
